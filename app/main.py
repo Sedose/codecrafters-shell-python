@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 
 
 def handle_exit(args):
@@ -36,6 +37,21 @@ def handle_type(args):
     print(f"{command}: not found")
 
 
+def run_external_command(command, args):
+    path_env = os.environ.get("PATH", "")
+    for directory in path_env.split(":"):
+        if not os.path.isdir(directory):
+            continue
+        full_path = os.path.join(directory, command)
+        if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
+            try:
+                subprocess.run([command, *args], executable=full_path)
+            except Exception:
+                print(f"{command}: failed to execute")
+            return
+    print(f"{command}: command not found")
+
+
 def command_not_found(command):
     print(f"{command}: command not found")
 
@@ -57,8 +73,11 @@ def main():
                 continue
             parts = line.split()
             command, args = parts[0], parts[1:]
-            handler = command_handlers.get(command, lambda _args: command_not_found(command))
-            handler(args)
+            handler = command_handlers.get(command)
+            if handler:
+                handler(args)
+            else:
+                run_external_command(command, args)
         except EOFError:
             break
 

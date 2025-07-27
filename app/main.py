@@ -1,3 +1,4 @@
+import os
 import sys
 
 
@@ -18,10 +19,21 @@ def handle_type(args):
         return
 
     command = args[0]
+
     if command in command_handlers:
         print(f"{command} is a shell builtin")
-    else:
-        print(f"{command}: not found")
+        return
+
+    path_env = os.environ.get("PATH", "")
+    for directory in path_env.split(":"):
+        if not os.path.isdir(directory):
+            continue
+        full_path = os.path.join(directory, command)
+        if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
+            print(f"{command} is {full_path}")
+            return
+
+    print(f"{command}: not found")
 
 
 def command_not_found(command):

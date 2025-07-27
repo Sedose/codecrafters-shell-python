@@ -13,6 +13,17 @@ def handle_echo(args):
     print(" ".join(args))
 
 
+def handle_type(args):
+    if not args:
+        return
+
+    command = args[0]
+    if command in command_handlers:
+        print(f"{command} is a shell builtin")
+    else:
+        print(f"{command}: not found")
+
+
 def command_not_found(command):
     print(f"{command}: command not found")
 
@@ -20,6 +31,7 @@ def command_not_found(command):
 command_handlers = {
     "exit": handle_exit,
     "echo": handle_echo,
+    "type": handle_type,
 }
 
 

@@ -5,9 +5,9 @@ import subprocess
 
 def handle_cd(args):
     if not args:
-        return  # No path provided, do nothing (we'll handle ~ later)
-
-    target_dir = args[0]
+        target_dir = os.path.expanduser("~")
+    else:
+        target_dir = os.path.expanduser(args[0])
 
     if os.path.isdir(target_dir):
         try:

@@ -9,12 +9,17 @@ def handle_exit(args):
     sys.exit(status)
 
 
+def handle_echo(args):
+    print(" ".join(args))
+
+
 def command_not_found(command):
     print(f"{command}: command not found")
 
 
 command_handlers = {
     "exit": handle_exit,
+    "echo": handle_echo,
 }
 
 

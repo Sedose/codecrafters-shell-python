@@ -3,6 +3,10 @@ import sys
 import subprocess
 
 
+def handle_pwd(args):
+    print(os.getcwd())
+
+
 def handle_exit(args):
     try:
         status = int(args[0]) if args else 0
@@ -60,6 +64,7 @@ command_handlers = {
     "exit": handle_exit,
     "echo": handle_echo,
     "type": handle_type,
+    "pwd": handle_pwd,
 }
 
 

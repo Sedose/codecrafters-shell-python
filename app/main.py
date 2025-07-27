@@ -3,6 +3,21 @@ import sys
 import subprocess
 
 
+def handle_cd(args):
+    if not args:
+        return
+
+    target_dir = args[0]
+
+    if os.path.isabs(target_dir) and os.path.isdir(target_dir):
+        try:
+            os.chdir(target_dir)
+        except Exception:
+            print(f"cd: {target_dir}: No such file or directory")
+    else:
+        print(f"cd: {target_dir}: No such file or directory")
+
+
 def handle_pwd(args):
     print(os.getcwd())
 
@@ -65,6 +80,7 @@ command_handlers = {
     "echo": handle_echo,
     "type": handle_type,
     "pwd": handle_pwd,
+    "cd": handle_cd,
 }
 
 

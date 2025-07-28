@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 from pathlib import Path
-
+import shlex
 
 def handle_cd(args) -> None:
     target_path = Path(args[0]).expanduser() if args else Path.home()
@@ -81,7 +81,11 @@ command_handlers = {
 def main():
     while True:
         try:
-            command, *args = input("$ ").split()
+            line = input("$ ")
+            tokens = shlex.split(line, posix=True)
+            if not tokens:
+                continue
+            command, *args = tokens
         except EOFError:
             break
         except ValueError:

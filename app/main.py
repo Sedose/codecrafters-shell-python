@@ -1,21 +1,24 @@
 import os
 import sys
 import subprocess
+from pathlib import Path
 
 
-def handle_cd(args):
-    if not args:
-        target_dir = os.path.expanduser("~")
-    else:
-        target_dir = os.path.expanduser(args[0])
+def handle_cd(args) -> None:
+    target_path = Path(args[0]).expanduser() if args else Path.home()
 
-    if os.path.isdir(target_dir):
-        try:
-            os.chdir(target_dir)
-        except Exception:
-            print(f"cd: {target_dir}: No such file or directory")
-    else:
-        print(f"cd: {target_dir}: No such file or directory")
+    if not target_path.exists():
+        print(f"cd: {target_path}: No such file or directory")
+        return
+
+    if not target_path.is_dir():
+        print(f"cd: {target_path}: Not a directory")
+        return
+
+    try:
+        os.chdir(target_path)
+    except OSError as error:
+        print(f"cd: failed to change directory: {type(error).__name__}: {error}")
 
 
 def handle_pwd(args):
@@ -34,45 +37,36 @@ def handle_echo(args):
     print(" ".join(args))
 
 
+def find_executable(command):
+    for path in os.environ.get("PATH", "").split(":"):
+        if not os.path.isdir(path):
+            continue
+        full_path = os.path.join(path, command)
+        if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
+            return full_path
+    return None
+
+
 def handle_type(args):
     if not args:
         return
-
-    command = args[0]
-
-    if command in command_handlers:
-        print(f"{command} is a shell builtin")
+    if args[0] in command_handlers:
+        print(f"{args[0]} is a shell builtin")
         return
-
-    path_env = os.environ.get("PATH", "")
-    for directory in path_env.split(":"):
-        if not os.path.isdir(directory):
-            continue
-        full_path = os.path.join(directory, command)
-        if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
-            print(f"{command} is {full_path}")
-            return
-
-    print(f"{command}: not found")
+    if path := find_executable(args[0]):
+        print(f"{args[0]} is {path}")
+    else:
+        print(f"{args[0]}: not found")
 
 
 def run_external_command(command, args):
-    path_env = os.environ.get("PATH", "")
-    for directory in path_env.split(":"):
-        if not os.path.isdir(directory):
-            continue
-        full_path = os.path.join(directory, command)
-        if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
-            try:
-                subprocess.run([command, *args], executable=full_path)
-            except Exception:
-                print(f"{command}: failed to execute")
-            return
-    print(f"{command}: command not found")
-
-
-def command_not_found(command):
-    print(f"{command}: command not found")
+    if path := find_executable(command):
+        try:
+            subprocess.run([command, *args], executable=path)
+        except Exception:
+            print(f"{command}: failed to execute")
+    else:
+        print(f"{command}: command not found")
 
 
 command_handlers = {
@@ -86,21 +80,17 @@ command_handlers = {
 
 def main():
     while True:
-        sys.stdout.write("$ ")
-        sys.stdout.flush()
         try:
-            line = input()
-            if not line:
-                continue
-            parts = line.split()
-            command, args = parts[0], parts[1:]
-            handler = command_handlers.get(command)
-            if handler:
-                handler(args)
-            else:
-                run_external_command(command, args)
+            command, *args = input("$ ").split()
         except EOFError:
             break
+        except ValueError:
+            continue
+
+        if handler := command_handlers.get(command):
+            handler(args)
+        else:
+            run_external_command(command, args)
 
 
 if __name__ == "__main__":

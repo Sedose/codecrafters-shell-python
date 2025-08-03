@@ -81,14 +81,20 @@ def run_external_command(command, args, stdout_file=None):
         print(f"{command}: failed to execute: {e}", file=sys.stderr)
 
 
+redirection_tokens = {">", "1>"}
+
 def parse_redirection(tokens):
     for i, token in enumerate(tokens):
-        if token in ['>', '1>']:
-            if i == len(tokens) - 1:
+        if token in redirection_tokens:                     # space-separated form
+            if i + 1 == len(tokens):
                 print("Error: no file provided for redirection", file=sys.stderr)
                 return tokens, None
-            filename = tokens[i + 1]
-            return tokens[:i] + tokens[i + 2:], filename
+            return tokens[:i] + tokens[i + 2:], tokens[i + 1]
+
+        m = re.fullmatch(r"(1?>)(.+)", token)               # glued form: >file or 1>file
+        if m:
+            return tokens[:i] + tokens[i + 1:], m.group(2)
+
     return tokens, None
 
 
